@@ -1,7 +1,7 @@
 {
-  "name": "ecommerce-backend",
+  "name": "ecommerce-mern-backend",
   "version": "1.0.0",
-  "description": "Ecommerce backend",
+  "description": "Ecommerce MERN backend",
   "main": "app.js",
   "type": "module",
   "scripts": {
