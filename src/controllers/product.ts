@@ -1,9 +1,14 @@
 import { Request } from "express";
 import { rm } from "fs";
+// import { faker } from "@faker-js/faker";
 
 import Product from "../models/product.js";
 import { TryCatch } from "../middlewares/error.js";
-import { NewProductRequestBody } from "./../types/product.js";
+import {
+  BaseQuery,
+  NewProductRequestBody,
+  SearchRequestQuery,
+} from "./../types/product.js";
 import ErrorHandler from "../utils/error-handler.js";
 
 export const createNewProduct = TryCatch(
@@ -73,6 +78,48 @@ export const getAdminProducts = TryCatch(async (req, res, next) => {
     products,
   });
 });
+
+export const getAllProducts = TryCatch(
+  async (req: Request<{}, {}, SearchRequestQuery>, res, next) => {
+    const { search, minPrice, maxPrice, category, sort } = req.query;
+
+    // Pagination
+    const page = Number(req.query.page) || 1;
+    const limit = Number(process.env.PRODUCT_PER_PAGE) || 8;
+    const skip = (page - 1) * limit;
+
+    const baseQuery: BaseQuery = {};
+
+    if (search) baseQuery.name = { $regex: String(search), $options: "i" };
+    if (category) baseQuery.category = String(category);
+    if (minPrice)
+      baseQuery.price = {
+        $gte: Number(minPrice),
+      };
+    if (maxPrice)
+      baseQuery.price = {
+        ...baseQuery.price,
+        $lte: Number(maxPrice),
+      };
+
+    const [filteredOnlyProducts, finalProducts] = await Promise.all([
+      Product.find(baseQuery),
+      Product.find(baseQuery)
+        .sort(sort && { price: sort === "asc" ? 1 : -1 })
+        .skip(skip)
+        .limit(limit),
+    ]);
+
+    const totalPage = Math.ceil(filteredOnlyProducts.length / limit);
+
+    return res.status(200).json({
+      success: true,
+      message: "All products fetched successfully",
+      products: finalProducts,
+      totalPage,
+    });
+  }
+);
 
 export const getProductById = TryCatch(async (req, res, next) => {
   const { id } = req.params;
@@ -161,3 +208,46 @@ export const deleteProductById = TryCatch(async (req, res, next) => {
     message: "Product deleted successfully",
   });
 });
+
+// const generateRandomProducts = async (count: number = 10) => {
+//   const products = [];
+
+//   for (let i = 0; i < count; i++) {
+//     const product = {
+//       name: faker.commerce.productName(),
+//       photo: "uploads\\f85ca35-c53e-4c08-8a20-4f31b5402919.jpg",
+//       price: faker.commerce.price({ min: 1500, max: 80000, dec: 0 }),
+//       stock: faker.commerce.price({ min: 0, max: 100, dec: 0 }),
+//       category: faker.commerce.department().toLowerCase(),
+//       createdAt: new Date(faker.date.past()),
+//       updatedAt: new Date(faker.date.recent()),
+//       __v: 0,
+//     };
+
+//     products.push(product);
+//   }
+
+//   await Product.create(products);
+
+//   console.log({
+//     success: true,
+//     message: "Random products created successfully",
+//   });
+// };
+
+// const deleteRandomProducts = async (skip: number = 10) => {
+//   const products = await Product.find({}).skip(skip);
+
+//   for (let i = 0; i < products.length; i++) {
+//     const product = products[i];
+//     await product.deleteOne();
+//   }
+
+//   console.log({
+//     success: true,
+//     message: "Random products deleted successfully",
+//   });
+// };
+
+// generateRandomProducts(20);
+// deleteRandomProducts(1);
