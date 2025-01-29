@@ -1,5 +1,6 @@
 import express, { NextFunction, Request, Response } from "express";
 import dotenv from "dotenv";
+import NodeCache from "node-cache";
 
 import { connectDb } from "./utils/db.js";
 import { errorMiddleware } from "./middlewares/error.js";
@@ -9,6 +10,8 @@ import productRoutes from "./routes/product.js";
 
 dotenv.config();
 connectDb();
+
+export const myCache = new NodeCache();
 
 const PORT = process.env.PORT || 3000;
 
