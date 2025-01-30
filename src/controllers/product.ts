@@ -11,6 +11,7 @@ import {
 } from "./../types/product.js";
 import ErrorHandler from "../utils/error-handler.js";
 import { myCache } from "../app.js";
+import { invalidateCache } from "../utils/cache.js";
 
 export const createNewProduct = TryCatch(
   async (req: Request<{}, {}, NewProductRequestBody>, res, next) => {
@@ -41,6 +42,8 @@ export const createNewProduct = TryCatch(
       stock,
       photo: photo.path,
     });
+
+    await invalidateCache({ product: true });
 
     return res.status(201).json({
       success: true,
@@ -206,6 +209,8 @@ export const updateProductbyId = TryCatch(async (req, res, next) => {
 
   await product.save();
 
+  await invalidateCache({ product: true });
+
   const newProd = await Product.findById(id);
 
   return res.status(200).json({
@@ -232,6 +237,8 @@ export const deleteProductById = TryCatch(async (req, res, next) => {
   });
 
   await product.deleteOne();
+
+  await invalidateCache({ product: true });
 
   return res.status(200).json({
     success: true,
