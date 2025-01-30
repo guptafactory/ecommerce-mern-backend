@@ -1,23 +1,30 @@
-import express, { NextFunction, Request, Response } from "express";
+import express from "express";
 import dotenv from "dotenv";
 import NodeCache from "node-cache";
 
-import { connectDb } from "./utils/db.js";
-import { errorMiddleware } from "./middlewares/error.js";
-
 import userRoutes from "./routes/user.js";
 import productRoutes from "./routes/product.js";
+import orderRoutes from "./routes/order.js";
 
-dotenv.config();
-connectDb();
+import { connectDb } from "./utils/db.js";
+import { errorMiddleware } from "./middlewares/error.js";
+import morgan from "morgan";
 
-export const myCache = new NodeCache();
+dotenv.config({
+  path: "./.env",
+});
 
 const PORT = process.env.PORT || 3000;
+const mongoURI = process.env.MONGO_URI || "";
+
+connectDb(mongoURI);
+
+export const myCache = new NodeCache();
 
 const app = express();
 
 app.use(express.json());
+app.use(morgan("dev"));
 
 app.get("/", (req, res) => {
   res.send("Welcome to ecommerce backend");
@@ -25,6 +32,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/product", productRoutes);
+app.use("/api/v1/order", orderRoutes);
 
 app.use("/uploads", express.static("uploads"));
 app.use(errorMiddleware);

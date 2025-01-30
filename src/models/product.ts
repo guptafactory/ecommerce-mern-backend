@@ -3,8 +3,8 @@ import mongoose from "mongoose";
 interface IUser extends mongoose.Document {
   name: string;
   category: string;
-  price: Number;
-  stock: Number;
+  price: number;
+  stock: number;
   photo: string;
 }
 

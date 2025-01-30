@@ -1,10 +1,8 @@
 import mongoose from "mongoose";
 
-export const connectDb = () => {
+export const connectDb = (mongoURI: string) => {
   mongoose
-    .connect("mongodb://127.0.0.1:27017", {
-      dbName: "ecommerce-mern",
-    })
+    .connect(mongoURI)
     .then((c) => console.log(`DB connected to ${c.connection.host}`))
     .catch((err) => {
       console.log("Db error: ", err.message);
