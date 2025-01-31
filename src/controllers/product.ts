@@ -153,16 +153,16 @@ export const getAllProducts = TryCatch(
 );
 
 export const getProductById = TryCatch(async (req, res, next) => {
-  const { id } = req.params;
+  const { id: productId } = req.params;
   let product;
-  const cacheKey = `product-${id}`;
+  const cacheKey = `product-${productId}`;
 
   if (myCache.has(cacheKey)) {
     product = JSON.parse(myCache.get(cacheKey) as string);
   } else {
-    product = await Product.findById(id);
+    product = await Product.findById(productId);
     if (!product) {
-      return next(new ErrorHandler("Invalid product Id", 400));
+      return next(new ErrorHandler("Product not found", 404));
     }
     myCache.set(cacheKey, JSON.stringify(product));
   }
@@ -175,11 +175,11 @@ export const getProductById = TryCatch(async (req, res, next) => {
 });
 
 export const updateProductbyId = TryCatch(async (req, res, next) => {
-  const { id } = req.params;
+  const { id: productId } = req.params;
   const { name, category, price, stock } = req.body;
   const photo = req.file;
 
-  const product = await Product.findById(id);
+  const product = await Product.findById(productId);
 
   if (!product) {
     if (photo) {
@@ -191,7 +191,7 @@ export const updateProductbyId = TryCatch(async (req, res, next) => {
         }
       });
     }
-    return next(new ErrorHandler("Invalid product Id ", 400));
+    return next(new ErrorHandler("Product not found", 404));
   }
 
   if (photo) {
@@ -213,9 +213,9 @@ export const updateProductbyId = TryCatch(async (req, res, next) => {
 
   await product.save();
 
-  await invalidateCache({ product: true });
+  await invalidateCache({ product: true, productId });
 
-  const newProd = await Product.findById(id);
+  const newProd = await Product.findById(productId);
 
   return res.status(200).json({
     success: true,
@@ -225,11 +225,11 @@ export const updateProductbyId = TryCatch(async (req, res, next) => {
 });
 
 export const deleteProductById = TryCatch(async (req, res, next) => {
-  const { id } = req.params;
-  const product = await Product.findById(id);
+  const { id: productId } = req.params;
+  const product = await Product.findById(productId);
 
   if (!product) {
-    return next(new ErrorHandler("Product not found", 400));
+    return next(new ErrorHandler("Product not found", 404));
   }
 
   rm(product.photo, (err) => {
@@ -242,7 +242,7 @@ export const deleteProductById = TryCatch(async (req, res, next) => {
 
   await product.deleteOne();
 
-  await invalidateCache({ product: true });
+  await invalidateCache({ product: true, productId });
 
   return res.status(200).json({
     success: true,

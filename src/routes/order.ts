@@ -7,7 +7,7 @@ import {
   getMyOrders,
   getAllOrders,
   getOrderById,
-  updateOrderById,
+  processOrderById,
 } from "../controllers/order.js";
 import { adminOnly } from "../middlewares/auth.js";
 
@@ -24,7 +24,7 @@ router.get("/all", adminOnly, getAllOrders);
 router
   .route("/:id")
   .get(getOrderById)
-  .put(updateOrderById)
-  .delete(deleteOrderById);
+  .put(adminOnly, processOrderById)
+  .delete(adminOnly, deleteOrderById);
 
 export default router;

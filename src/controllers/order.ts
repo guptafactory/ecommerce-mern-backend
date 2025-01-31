@@ -1,13 +1,13 @@
 import { Request } from "express";
 
 import Order from "../models/order.js";
-import { NewOrderRequestBody, orderItemType } from "../types/order.js";
-import { reduceStock } from "../utils/product-stock.js";
+import { myCache } from "../app.js";
+import { NewOrderRequestBody } from "../types/order.js";
 
+import { invalidateCache } from "../utils/cache.js";
+import { reduceStock } from "../utils/product-stock.js";
 import ErrorHandler from "../utils/error-handler.js";
 import { TryCatch } from "../middlewares/error.js";
-import { invalidateCache } from "../utils/cache.js";
-import { myCache } from "../app.js";
 
 export const createNewOrder = TryCatch(
   async (req: Request<{}, {}, NewOrderRequestBody>, res, next) => {
@@ -45,7 +45,13 @@ export const createNewOrder = TryCatch(
 
     await reduceStock(orderItems);
 
-    await invalidateCache({ product: true, order: true, admin: true });
+    await invalidateCache({
+      product: true,
+      order: true,
+      admin: true,
+      userId: user,
+      productId: orderItems.map((order) => order.productId),
+    });
 
     return res.status(201).json({
       success: true,
@@ -59,15 +65,15 @@ export const getMyOrders = TryCatch(async (req, res, next) => {
   const { id: userId } = req.query;
 
   let orders = [];
-  const cacheKey = `user-${userId}`;
+  const cacheKey = `orders-user-${userId}`;
 
   if (myCache.has(cacheKey)) {
     orders = JSON.parse(myCache.get(cacheKey) as string);
   } else {
     orders = await Order.find({ user: userId });
 
-    if (!orders || !orders.length) {
-      return next(new ErrorHandler("No order items provided", 400));
+    if (!orders) {
+      return next(new ErrorHandler("Orders not found", 404));
     }
     myCache.set(cacheKey, JSON.stringify(orders));
   }
@@ -99,17 +105,17 @@ export const getAllOrders = TryCatch(async (req, res, next) => {
 });
 
 export const getOrderById = TryCatch(async (req, res, next) => {
-  const { id } = req.params;
+  const { id: orderId } = req.params;
   let order;
-  const cacheKey = `order-${id}`;
+  const cacheKey = `order-${orderId}`;
 
   if (myCache.has(cacheKey)) {
     order = JSON.parse(myCache.get(cacheKey) as string);
   } else {
-    order = await Order.findById(id).populate("user", "name");
+    order = await Order.findById(orderId).populate("user", "name");
 
     if (!order) {
-      return next(new ErrorHandler("Invalid order Id", 400));
+      return next(new ErrorHandler("Order not found", 404));
     }
     myCache.set(cacheKey, JSON.stringify(order));
   }
@@ -121,6 +127,69 @@ export const getOrderById = TryCatch(async (req, res, next) => {
   });
 });
 
-export const updateOrderById = TryCatch(async (req, res, next) => {});
+export const processOrderById = TryCatch(async (req, res, next) => {
+  const { id: orderId } = req.params;
+  const order = await Order.findById(orderId);
 
-export const deleteOrderById = TryCatch(async (req, res, next) => {});
+  if (!order) {
+    return next(new ErrorHandler("Order not found", 404));
+  }
+
+  switch (order.status) {
+    case "Processing":
+      order.status = "Shipped";
+      break;
+    case "Shipped":
+      order.status = "Delivered";
+      break;
+    case "Delivered":
+      return next(new ErrorHandler("Order already delivered", 400));
+    case "Cancelled":
+      return next(new ErrorHandler("Order is cancelled", 400));
+    default:
+      return next(new ErrorHandler("Invalid order status", 400));
+  }
+
+  await order.save();
+
+  await invalidateCache({
+    product: false,
+    order: true,
+    admin: true,
+    userId: order.user,
+    orderId,
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: "Order processed successfully",
+    status: order.status,
+  });
+});
+
+export const deleteOrderById = TryCatch(async (req, res, next) => {
+  const { id: orderId } = req.params;
+  const order = await Order.findById(orderId);
+
+  if (!order) {
+    return next(new ErrorHandler("Order not found", 404));
+  }
+  await order.deleteOne();
+
+  ///TODO - add stock back to the products & invalidate product caches also
+
+  await invalidateCache({
+    product: false,
+    order: true,
+    admin: true,
+    userId: order.user,
+    orderId,
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: "Order deleted successfully",
+  });
+});
+
+// Cache keys - all-orders, order-{id}, orders-user-{id}

@@ -1,11 +1,13 @@
 import { myCache } from "../app.js";
-import Product from "../models/product.js";
 import { InvalidateCacheProps } from "../types/cache.js";
 
 export const invalidateCache = async ({
   product,
   order,
   admin,
+  productId,
+  userId,
+  orderId,
 }: InvalidateCacheProps) => {
   if (product) {
     const productKeys: string[] = [
@@ -13,16 +15,24 @@ export const invalidateCache = async ({
       "categories",
       "admin-products",
     ];
-    const products = await Product.find().select("_id");
-    products.forEach((product) => {
-      productKeys.push(`product-${product._id}`);
-    });
+
+    if (typeof productId === "string") productKeys.push(`product-${productId}`);
+
+    if (typeof productId === "object")
+      productId.forEach((id) => productKeys.push(`product-${id}`));
+
     myCache.del(productKeys);
   }
+
   if (order) {
-    const orderKeys: string[] = ["", "", ""];
+    const orderKeys: string[] = [
+      "all-orders",
+      `orders-user-${userId}`,
+      `order-${orderId}`,
+    ];
     myCache.del(orderKeys);
   }
+
   if (admin) {
     const adminKeys: string[] = ["", "", ""];
     myCache.del(adminKeys);
