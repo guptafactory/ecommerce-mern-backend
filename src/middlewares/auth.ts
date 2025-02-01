@@ -11,7 +11,7 @@ export const adminOnly = TryCatch(async (req, res, next) => {
   if (!user) return next(new ErrorHandler("User not found", 401));
 
   if (user.role !== "admin")
-    return next(new ErrorHandler("You are not authorized.", 401));
+    return next(new ErrorHandler("You are not authorized.", 403));
 
   next();
 });
