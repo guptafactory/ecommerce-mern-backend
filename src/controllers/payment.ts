@@ -27,10 +27,10 @@ export const updateCouponById = TryCatch(async (req, res, next) => {
   const { amount } = req.body;
 
   const coupon = await Coupon.findById(couponId);
-  if (!coupon) return next(new ErrorHandler("Invalid coupon Id", 404));
+  if (!coupon) return next(new ErrorHandler("Coupon not found", 404));
 
   if (!amount || isNaN(amount))
-    return next(new ErrorHandler("Provide coupon Id", 400));
+    return next(new ErrorHandler("Invalid coupon amount details", 400));
 
   coupon.amount = amount;
   await coupon.save();
@@ -46,7 +46,7 @@ export const deleteCouponById = TryCatch(async (req, res, next) => {
   const { id: couponId } = req.params;
 
   const coupon = await Coupon.findById(couponId);
-  if (!coupon) return next(new ErrorHandler("Invalid coupon Id", 404));
+  if (!coupon) return next(new ErrorHandler("Coupon not found", 404));
 
   await coupon.deleteOne();
 
@@ -60,7 +60,7 @@ export const getCouponById = TryCatch(async (req, res, next) => {
   const { id: couponId } = req.params;
 
   const coupon = await Coupon.findById(couponId);
-  if (!coupon) return next(new ErrorHandler("Invalid coupon Id", 404));
+  if (!coupon) return next(new ErrorHandler("Coupon not found", 404));
 
   return res.status(200).json({
     success: true,
@@ -74,7 +74,7 @@ export const getAllCoupons = TryCatch(async (req, res, next) => {
 
   return res.status(200).json({
     success: true,
-    message: "All Coupon details fetched successfully",
+    message: "All coupon(s) details fetched successfully",
     coupons,
   });
 });
@@ -85,9 +85,7 @@ export const applyDiscount = TryCatch(async (req, res, next) => {
 
   const coupon = await Coupon.findOne({ code });
 
-  if (!coupon) {
-    if (!code) return next(new ErrorHandler("Coupon not found", 404));
-  }
+  if (!coupon) return next(new ErrorHandler("Coupon not found", 404));
 
   return res.status(200).json({
     success: true,

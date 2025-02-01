@@ -16,12 +16,12 @@ const router = express.Router();
 router.post("/coupon/new", adminOnly, createNewCoupon);
 
 // /api/v1/payment/coupon/all
-router.post("/coupon/all", adminOnly, getAllCoupons);
+router.get("/coupon/all", adminOnly, getAllCoupons);
 
 // /api/v1/payment/coupon/dynamic_id
 router
   .route("/coupon/:id")
-  .get(adminOnly, getCouponById)
+  .get(getCouponById)
   .put(adminOnly, updateCouponById)
   .delete(adminOnly, deleteCouponById);
 
