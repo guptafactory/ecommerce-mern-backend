@@ -7,7 +7,7 @@ interface IUser extends mongoose.Document {
   email: string;
   photo: string;
   role: "admin" | "user";
-  gender: "male" | "female" | "other";
+  gender: "male" | "female";
   dob: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -43,7 +43,7 @@ const schema = new mongoose.Schema(
     },
     gender: {
       type: String,
-      enum: ["male", "female", "other"],
+      enum: ["male", "female"],
       required: [true, "User gender is required"],
     },
     dob: {

@@ -1,11 +1,14 @@
 import mongoose from "mongoose";
 
 interface IUser extends mongoose.Document {
+  _id: mongoose.Types.ObjectId;
   name: string;
   category: string;
   price: number;
   stock: number;
   photo: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const schema = new mongoose.Schema<IUser>(

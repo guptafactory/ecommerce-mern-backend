@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 
 interface IUser extends mongoose.Document {
+  _id: mongoose.Types.ObjectId;
   shippingInfo: {
     address: string;
     city: string;
@@ -24,6 +25,8 @@ interface IUser extends mongoose.Document {
       productId: string;
     }
   ];
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const schema = new mongoose.Schema<IUser>(
