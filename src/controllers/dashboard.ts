@@ -6,6 +6,7 @@ import User from "../models/user.js";
 import { TryCatch } from "../middlewares/error.js";
 import ErrorHandler from "../utils/error-handler.js";
 import { calculatePercent } from "../utils/dashboard.js";
+import { getCategories } from "../utils/order.js";
 
 export const getStats = TryCatch(async (req, res, next) => {
   let stats;
@@ -27,10 +28,6 @@ export const getStats = TryCatch(async (req, res, next) => {
       end: new Date(today.getFullYear(), today.getMonth(), 0, 23, 59, 59, 999),
       // Last day of previous month
     };
-
-    console.log("Today: ", today);
-    console.log("Curr:", currMonth);
-    console.log("Prev:", prevMonth);
 
     const currMonthProductsPromise = Product.find({
       createdAt: {
@@ -78,7 +75,7 @@ export const getStats = TryCatch(async (req, res, next) => {
       },
     });
 
-    const latestTransactionsPromise = Order.find()
+    const latestOrdersPromise = Order.find()
       .select(["orderItems", "discount", "total", "status"])
       .limit(4);
 
@@ -95,7 +92,7 @@ export const getStats = TryCatch(async (req, res, next) => {
       last6MonthsOrders,
       categories,
       femaleUsers,
-      latestTransactions,
+      latestOrders,
     ] = await Promise.all([
       currMonthProductsPromise,
       currMonthUsersPromise,
@@ -109,7 +106,7 @@ export const getStats = TryCatch(async (req, res, next) => {
       last6MonthsOrdersPromise,
       Product.distinct("category"),
       User.countDocuments({ gender: "female" }),
-      latestTransactionsPromise,
+      latestOrdersPromise,
     ]);
 
     const currMonthRevenue = currMonthOrders.reduce(
@@ -156,23 +153,20 @@ export const getStats = TryCatch(async (req, res, next) => {
       }
     });
 
-    const categoriesCountPromise = categories.map((category) =>
-      Product.countDocuments({ category })
-    );
-    const categoriesCount = await Promise.all(categoriesCountPromise);
-
-    const categoryCount: Record<string, number>[] = [];
-
-    categories.forEach((category, i) => {
-      categoryCount.push({
-        [category]: Math.round((categoriesCount[i] / productsCount) * 100),
-      });
-    });
+    const categoryCount = await getCategories({ categories, productsCount });
 
     const userRatio = {
       male: usersCount - femaleUsers,
       female: femaleUsers,
     };
+
+    const modifiedLatestOrders = latestOrders.map((order) => ({
+      _id: order._id,
+      discount: order.discount,
+      amount: order.total,
+      quantity: order.orderItems.length,
+      status: order.status,
+    }));
 
     stats = {
       categoryCount,
@@ -183,10 +177,10 @@ export const getStats = TryCatch(async (req, res, next) => {
         revenue: ordersMonthlyRevenue,
       },
       userRatio,
-      latestTransactions,
+      latestTransactions: modifiedLatestOrders,
     };
 
-    // myCache.set("admin-stats", stats);
+    myCache.set("admin-stats", JSON.stringify(stats));
   }
 
   return res.status(200).json({
@@ -196,8 +190,121 @@ export const getStats = TryCatch(async (req, res, next) => {
   });
 });
 
-export const getLineCharts = TryCatch(async (req, res, next) => {});
+export const getPieCharts = TryCatch(async (req, res, next) => {
+  let charts;
+  if (myCache.has("admin-pie-charts")) {
+    charts = JSON.parse(myCache.get("admin-pie-charts") as string);
+  } else {
+    const allOrdersPromise = Order.find().select([
+      "subtotal",
+      "total",
+      "discount",
+      "tax",
+      "shippingCharges",
+    ]);
 
-export const getPieCharts = TryCatch(async (req, res, next) => {});
+    const [
+      processingOrder,
+      shippedOrder,
+      deliveredOrder,
+      cancelledOrder,
+      categories,
+      productsCount,
+      outOfStock,
+      allOrders,
+      allUsers,
+      adminUsers,
+      customerUsers,
+    ] = await Promise.all([
+      Order.countDocuments({ status: "Processing" }),
+      Order.countDocuments({ status: "Shipped" }),
+      Order.countDocuments({ status: "Delivered" }),
+      Order.countDocuments({ status: "Cancelled" }),
+      Product.distinct("category"),
+      Product.countDocuments(),
+      Product.countDocuments({ stock: 0 }),
+      allOrdersPromise,
+      User.find().select("dob"),
+      User.countDocuments({ role: "admin" }),
+      User.countDocuments({ role: "user" }),
+    ]);
+
+    const orderFulfillment = {
+      processing: processingOrder,
+      shipped: shippedOrder,
+      delivered: deliveredOrder,
+    };
+
+    const productCategories = await getCategories({
+      categories,
+      productsCount,
+    });
+
+    const stockAvailability = {
+      inStock: productsCount - outOfStock,
+      outOfStock,
+    };
+
+    const grossIncome = allOrders.reduce(
+      (prev, order) => prev + (order.total || 0),
+      0
+    );
+
+    const productionCost = allOrders.reduce(
+      (prev, order) => prev + (order.shippingCharges || 0),
+      0
+    );
+
+    const marketingCost = Math.round(grossIncome * (30 / 100)); // for simplicity
+
+    const discount = allOrders.reduce(
+      (prev, order) => prev + (order.discount || 0),
+      0
+    );
+
+    const burn = allOrders.reduce((prev, order) => prev + (order.tax || 0), 0); // for simplicity
+
+    const netMargin =
+      grossIncome - productionCost - marketingCost - discount - burn;
+
+    const revenueDistribution = {
+      productionCost,
+      marketingCost,
+      discount,
+      burn,
+      netMargin,
+    };
+
+    const usersAgeGroup = {
+      teen: allUsers.filter((user) => user.age < 20).length,
+      adult: allUsers.filter((user) => user.age >= 20 && user.age < 40).length,
+      old: allUsers.filter((user) => user.age >= 40).length,
+    };
+
+    const adminCustomer = {
+      admin: adminUsers,
+      customer: customerUsers,
+    };
+
+    charts = {
+      orderFulfillment,
+      productCategories,
+      stockAvailability,
+      revenueDistribution,
+      adminCustomer,
+      usersAgeGroup,
+    };
+
+    myCache.set("admin-pie-charts", JSON.stringify(charts));
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: "Pie chart fetched successfully",
+    charts,
+  });
+});
 
 export const getBarCharts = TryCatch(async (req, res, next) => {});
+
+export const getLineCharts = TryCatch(async (req, res, next) => {});
