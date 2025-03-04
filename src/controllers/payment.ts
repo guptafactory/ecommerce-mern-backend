@@ -1,6 +1,25 @@
+import { stripe } from "../app.js";
 import { TryCatch } from "../middlewares/error.js";
 import Coupon from "../models/payment.js";
 import ErrorHandler from "../utils/error-handler.js";
+
+export const createPaymentIntent = TryCatch(async (req, res, next) => {
+  const { amount } = req.body;
+
+  if (!amount || isNaN(amount))
+    return next(new ErrorHandler("Invalid amount details", 400));
+
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: Number(amount) * 100,
+    currency: "inr",
+  });
+
+  return res.status(201).json({
+    success: true,
+    message: "Payment intent created successfully",
+    clientSecret: paymentIntent.client_secret,
+  });
+});
 
 // Coupons
 export const createNewCoupon = TryCatch(async (req, res, next) => {
