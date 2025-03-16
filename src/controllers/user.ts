@@ -40,6 +40,7 @@ export const getAllUsers = TryCatch(async (req, res, next) => {
 
   return res.status(200).json({
     success: true,
+    message: "All users fetched successfully",
     count: users.length,
     users,
   });
@@ -53,6 +54,7 @@ export const getUserById = TryCatch(async (req, res, next) => {
 
   return res.status(200).json({
     success: true,
+    message: "User found successfully",
     user,
   });
 });

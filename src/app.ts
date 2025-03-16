@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import NodeCache from "node-cache";
 import morgan from "morgan";
 import Stripe from "stripe";
+import cors from "cors";
 
 import userRoutes from "./routes/user.js";
 import productRoutes from "./routes/product.js";
@@ -31,6 +32,7 @@ const app = express();
 
 app.use(express.json());
 app.use(morgan("dev"));
+app.use(cors());
 
 app.get("/", (req, res) => {
   res.send("Welcome to ecommerce backend");
