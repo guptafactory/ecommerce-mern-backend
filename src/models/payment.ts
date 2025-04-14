@@ -1,12 +1,12 @@
 import mongoose from "mongoose";
 
-interface IUser extends mongoose.Document {
+interface IPayment extends mongoose.Document {
   _id: mongoose.Types.ObjectId;
   code: string;
   amount: number;
 }
 
-const couponSchema = new mongoose.Schema<IUser>({
+const couponSchema = new mongoose.Schema<IPayment>({
   code: {
     type: String,
     required: [true, "Coupon is required"],
@@ -18,6 +18,6 @@ const couponSchema = new mongoose.Schema<IUser>({
   },
 });
 
-const Coupon = mongoose.model<IUser>("Coupon", couponSchema);
+const Coupon = mongoose.model<IPayment>("Coupon", couponSchema);
 
 export default Coupon;

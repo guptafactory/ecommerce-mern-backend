@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-interface IUser extends mongoose.Document {
+interface IOrder extends mongoose.Document {
   _id: mongoose.Types.ObjectId;
   shippingInfo: {
     address: string;
@@ -29,7 +29,7 @@ interface IUser extends mongoose.Document {
   updatedAt: Date;
 }
 
-const schema = new mongoose.Schema<IUser>(
+const schema = new mongoose.Schema<IOrder>(
   {
     shippingInfo: {
       address: {
@@ -114,6 +114,6 @@ const schema = new mongoose.Schema<IUser>(
   }
 );
 
-const Order = mongoose.model<IUser>("Order", schema);
+const Order = mongoose.model<IOrder>("Order", schema);
 
 export default Order;

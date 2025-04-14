@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-interface IUser extends mongoose.Document {
+interface IProduct extends mongoose.Document {
   _id: mongoose.Types.ObjectId;
   name: string;
   category: string;
@@ -11,7 +11,7 @@ interface IUser extends mongoose.Document {
   updatedAt: Date;
 }
 
-const schema = new mongoose.Schema<IUser>(
+const schema = new mongoose.Schema<IProduct>(
   {
     name: {
       type: String,
@@ -39,6 +39,6 @@ const schema = new mongoose.Schema<IUser>(
   }
 );
 
-const Product = mongoose.model<IUser>("Product", schema);
+const Product = mongoose.model<IProduct>("Product", schema);
 
 export default Product;

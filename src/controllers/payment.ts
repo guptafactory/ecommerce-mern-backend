@@ -1,6 +1,8 @@
-import { stripe } from "../app.js";
-import { TryCatch } from "../middlewares/error.js";
+import crypto from "crypto";
+
+import { razorpayInstance } from "../app.js";
 import Coupon from "../models/payment.js";
+import { TryCatch } from "../middlewares/error.js";
 import ErrorHandler from "../utils/error-handler.js";
 
 export const createPaymentIntent = TryCatch(async (req, res, next) => {
@@ -9,16 +11,72 @@ export const createPaymentIntent = TryCatch(async (req, res, next) => {
   if (!amount || isNaN(amount))
     return next(new ErrorHandler("Invalid amount details", 400));
 
-  const paymentIntent = await stripe.paymentIntents.create({
-    amount: Number(amount) * 100,
-    currency: "inr",
-  });
+  const options = {
+    amount: amount * 100,
+    currency: "INR",
+  };
 
-  return res.status(201).json({
+  const order = await razorpayInstance.orders.create(options);
+
+  if (!order) {
+    return next(new ErrorHandler("Unable to create Payment Intent", 500));
+  }
+
+  res.status(200).json({
     success: true,
     message: "Payment intent created successfully",
-    clientSecret: paymentIntent.client_secret,
+    order,
   });
+});
+
+export const getRazorpayKey = TryCatch(async (req, res, next) => {
+  if (!process.env.RAZORPAY_KEY_ID)
+    return next(
+      new ErrorHandler("Internal server error: Missing configuration", 500)
+    );
+
+  return res.status(200).json({
+    success: true,
+    message: "Razorpay key ID fetched successfully",
+    key: process.env.RAZORPAY_KEY_ID,
+  });
+});
+
+export const verifyPayment = TryCatch(async (req, res, next) => {
+  const { razorpay_payment_id, razorpay_order_id, razorpay_signature } =
+    req.body;
+
+  if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid request: Missing required fields",
+    });
+  }
+
+  if (!process.env.RAZORPAY_KEY_SECRET)
+    return next(
+      new ErrorHandler("Internal server error: Missing configuration", 500)
+    );
+
+  const body = razorpay_order_id + "|" + razorpay_payment_id;
+
+  const expectedSignature = crypto
+    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+    .update(body.toString())
+    .digest("hex");
+
+  const isAuthenticated = razorpay_signature === expectedSignature;
+
+  if (!isAuthenticated)
+    return next(
+      new ErrorHandler("Payment verification failed: Signature mismatch", 400)
+    );
+
+  // verify amount and orderID through database
+  // store new order details in database
+  return res.redirect(
+    `${process.env.FRONTEND_URL}/paymentSuccess?reference=${razorpay_payment_id}`
+  );
 });
 
 // Coupons

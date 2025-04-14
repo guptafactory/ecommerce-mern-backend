@@ -2,7 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import NodeCache from "node-cache";
 import morgan from "morgan";
-import Stripe from "stripe";
+import Razorpay from "razorpay";
 import cors from "cors";
 
 import userRoutes from "./routes/user.js";
@@ -20,11 +20,13 @@ dotenv.config({
 
 const PORT = process.env.PORT || 3000;
 const mongoURI = process.env.MONGO_URI || "";
-const stripeKey = process.env.STRIPE_KEY || "";
 
 connectDb(mongoURI);
 
-export const stripe = new Stripe(stripeKey);
+export const razorpayInstance = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
 
 export const myCache = new NodeCache();
 

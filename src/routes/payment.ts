@@ -8,13 +8,21 @@ import {
   deleteCouponById,
   getAllCoupons,
   getCouponById,
+  getRazorpayKey,
   updateCouponById,
+  verifyPayment,
 } from "../controllers/payment.js";
 
 const router = express.Router();
 
 // /api/v1/payment/create
-router.post("/create", adminOnly, createPaymentIntent);
+router.post("/create", createPaymentIntent);
+
+// /api/v1/payment/getKey
+router.get("/getKey", getRazorpayKey); // add adminOnly later
+
+// /api/v1/payment/verify
+router.post("/verify", verifyPayment); // add adminOnly later
 
 // /api/v1/payment/coupon/new
 router.post("/coupon/new", adminOnly, createNewCoupon);

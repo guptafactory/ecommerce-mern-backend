@@ -12,12 +12,16 @@ export const createNewUser = TryCatch(
   ) => {
     const { _id, name, email, photo, gender, dob } = req.body;
 
+    let user = await User.findById(_id);
+    if (user)
+      return res.status(200).json({
+        success: true,
+        message: `Welcome back, ${user.name}`,
+      });
+
     if (!_id || !name || !email || !photo || !gender || !dob) {
       return next(new ErrorHandler("Please fill all fields", 400));
     }
-
-    let user = await User.findById(_id);
-    if (user) return next(new ErrorHandler("User already exists", 400));
 
     user = await User.create({
       _id,
