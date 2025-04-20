@@ -35,6 +35,7 @@ export const createNewUser = TryCatch(
     return res.status(201).json({
       success: true,
       message: `Welcome ${user.name}`,
+      user,
     });
   }
 );
