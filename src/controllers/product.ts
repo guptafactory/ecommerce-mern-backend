@@ -18,22 +18,24 @@ export const createNewProduct = TryCatch(
     const { name, category, price, stock } = req.body;
     const photo = req.file;
 
-    if (!name || !category || !price || !stock || !photo) {
+    if (!name || !category || !price || !photo) {
       if (photo) {
         rm(photo.path, (err) => {
           if (err) {
-            console.error(err.message);
+            // console.error(err.message);
           } else {
-            console.log("File deleted successfully");
+            // console.log("File deleted successfully");
           }
         });
       }
       return next(new ErrorHandler("All fields are required", 400));
     }
 
-    if (isNaN(Number(price)) || isNaN(Number(stock))) {
+    if (isNaN(Number(price)) || isNaN(Number(stock)))
       return next(new ErrorHandler("Price and stock must be numbers", 400));
-    }
+
+    if (Number(price) <= 0 || Number(stock) < 0)
+      return next(new ErrorHandler("Invalid Price and stock values", 400));
 
     const product = await Product.create({
       name,
@@ -185,9 +187,9 @@ export const updateProductbyId = TryCatch(async (req, res, next) => {
     if (photo) {
       rm(photo.path, (err) => {
         if (err) {
-          console.error(err.message);
+          // console.error(err.message);
         } else {
-          console.log("New photo deleted successfully");
+          // console.log("New photo deleted successfully");
         }
       });
     }
@@ -197,9 +199,9 @@ export const updateProductbyId = TryCatch(async (req, res, next) => {
   if (photo) {
     rm(product.photo, (err) => {
       if (err) {
-        console.error(err.message);
+        // console.error(err.message);
       } else {
-        console.log("Old Photo deleted successfully");
+        // console.log("Old Photo deleted successfully");
       }
     });
     // new photo path set to product's photo path
@@ -234,9 +236,9 @@ export const deleteProductById = TryCatch(async (req, res, next) => {
 
   rm(product.photo, (err) => {
     if (err) {
-      console.error(err.message);
+      // console.error(err.message);
     } else {
-      console.log("Photo deleted successfully");
+      // console.log("Photo deleted successfully");
     }
   });
 
