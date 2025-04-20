@@ -144,8 +144,6 @@ export const processOrderById = TryCatch(async (req, res, next) => {
       break;
     case "Delivered":
       return next(new ErrorHandler("Order already delivered", 400));
-    case "Cancelled":
-      return next(new ErrorHandler("Order is cancelled", 400));
     default:
       return next(new ErrorHandler("Invalid order status", 400));
   }

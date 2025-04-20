@@ -16,9 +16,6 @@ router.post("/new", createNewUser);
 router.get("/all", adminOnly, getAllUsers);
 
 // /api/v1/user/dynamic_id
-router
-  .route("/:id")
-  .get(adminOnly, getUserById)
-  .delete(adminOnly, deleteUserById);
+router.route("/:id").get(getUserById).delete(adminOnly, deleteUserById);
 
 export default router;

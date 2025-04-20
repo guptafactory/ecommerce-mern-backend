@@ -80,7 +80,8 @@ const schema = new mongoose.Schema<IOrder>(
     },
     status: {
       type: String,
-      enum: ["Processing", "Shipped", "Delivered", "Cancelled"],
+      enum: ["Processing", "Shipped", "Delivered"],
+      // In future: "Processing" | "Shipped" | "Delivered" | "Cancelled" | "Refunded" | "Returned" | "Failed" | "Not Delivered" | "Transit";
       default: "Processing",
     },
     orderItems: [

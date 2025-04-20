@@ -47,10 +47,9 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
     req.body;
 
   if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature) {
-    return res.status(400).json({
-      success: false,
-      message: "Invalid request: Missing required fields",
-    });
+    return next(
+      new ErrorHandler("Invalid request: Missing required fields", 400)
+    );
   }
 
   if (!process.env.RAZORPAY_KEY_SECRET)
@@ -72,11 +71,10 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
       new ErrorHandler("Payment verification failed: Signature mismatch", 400)
     );
 
-  // verify amount and orderID through database
-  // store new order details in database
-  return res.redirect(
-    `${process.env.FRONTEND_URL}/paymentSuccess?reference=${razorpay_payment_id}`
-  );
+  return res.status(200).json({
+    success: true,
+    message: "Payment verified successfully",
+  });
 });
 
 // Coupons
