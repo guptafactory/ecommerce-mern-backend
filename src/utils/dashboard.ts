@@ -1,4 +1,3 @@
-import { Document } from "mongoose";
 import Product from "../models/product.js";
 
 export const calculatePercent = (
@@ -34,7 +33,7 @@ export const getCategories = async ({
   return categoryCount;
 };
 
-interface chartDataDoc extends Document {
+interface chartDataDoc {
   createdAt: Date;
   discount?: number;
   total?: number;

@@ -32,7 +32,7 @@ export const createPaymentIntent = TryCatch(async (req, res, next) => {
 export const getRazorpayKey = TryCatch(async (req, res, next) => {
   if (!process.env.RAZORPAY_KEY_ID)
     return next(
-      new ErrorHandler("Internal server error: Missing configuration", 500)
+      new ErrorHandler("Internal server error: Missing configuration", 500),
     );
 
   return res.status(200).json({
@@ -48,13 +48,13 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
 
   if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature) {
     return next(
-      new ErrorHandler("Invalid request: Missing required fields", 400)
+      new ErrorHandler("Invalid request: Missing required fields", 400),
     );
   }
 
   if (!process.env.RAZORPAY_KEY_SECRET)
     return next(
-      new ErrorHandler("Internal server error: Missing configuration", 500)
+      new ErrorHandler("Internal server error: Missing configuration", 500),
     );
 
   const body = razorpay_order_id + "|" + razorpay_payment_id;
@@ -68,7 +68,7 @@ export const verifyPayment = TryCatch(async (req, res, next) => {
 
   if (!isAuthenticated)
     return next(
-      new ErrorHandler("Payment verification failed: Signature mismatch", 400)
+      new ErrorHandler("Payment verification failed: Signature mismatch", 400),
     );
 
   return res.status(200).json({
@@ -156,7 +156,7 @@ export const getAllCoupons = TryCatch(async (req, res, next) => {
 
 // Discount
 export const applyDiscount = TryCatch(async (req, res, next) => {
-  const { coupon: code } = req.query;
+  const code = req.query.coupon as string;
 
   const coupon = await Coupon.findOne({ code });
 

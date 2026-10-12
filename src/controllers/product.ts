@@ -52,10 +52,9 @@ export const createNewProduct = TryCatch(
       message: "Product created successfully",
       product,
     });
-  }
+  },
 );
 
-// Revalidate cache on product creation, updation, deletion and on New Order
 export const getLatestProducts = TryCatch(async (req, res, next) => {
   let products = [];
   const cacheKey = "latest-products";
@@ -74,7 +73,6 @@ export const getLatestProducts = TryCatch(async (req, res, next) => {
   });
 });
 
-// Revalidate cache on product creation, updation, deletion and on New Order
 export const getAllCategories = TryCatch(async (req, res, next) => {
   let categories: string[] = [];
   const cacheKey = "categories";
@@ -93,7 +91,6 @@ export const getAllCategories = TryCatch(async (req, res, next) => {
   });
 });
 
-// Revalidate cache on product creation, updation, deletion and on New Order
 export const getAdminProducts = TryCatch(async (req, res, next) => {
   let products;
   const cacheKey = "admin-products";
@@ -151,7 +148,7 @@ export const getAllProducts = TryCatch(
       products: finalProducts,
       totalPages,
     });
-  }
+  },
 );
 
 export const getProductById = TryCatch(async (req, res, next) => {

@@ -62,7 +62,7 @@ export const createNewOrder = TryCatch(
 );
 
 export const getMyOrders = TryCatch(async (req, res, next) => {
-  const { id: userId } = req.query;
+  const userId = req.query.id as string;
 
   let orders = [];
   const cacheKey = `orders-user-${userId}`;

@@ -15,7 +15,7 @@ export type orderItemType = {
 };
 
 export interface NewOrderRequestBody {
-  shippingInfo: shippingInfoType[];
+  shippingInfo: shippingInfoType;
   user: string;
   subtotal: number;
   tax: number;

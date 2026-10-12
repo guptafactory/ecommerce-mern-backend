@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import validator from "validator";
 
-interface IUser extends mongoose.Document {
+interface IUser extends mongoose.Document<string> {
   _id: string;
   name: string;
   email: string;

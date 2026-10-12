@@ -1,8 +1,8 @@
 export interface NewProductRequestBody {
   name: string;
   category: string;
-  price: Number;
-  stock: Number;
+  price: number;
+  stock: number;
 }
 
 export type SearchRequestQuery = {
